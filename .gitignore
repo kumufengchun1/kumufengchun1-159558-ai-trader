@@ -1,7 +1,9 @@
-.streamlit/secrets.toml
 __pycache__/
-*.pyc
+*.py[cod]
 .venv/
 .env
+secrets.toml
+*.db
 models/*.joblib
+.pytest_cache/
 .DS_Store

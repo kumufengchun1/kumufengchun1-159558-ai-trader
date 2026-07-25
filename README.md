@@ -1,111 +1,61 @@
 # 159558 AI Trading System
 
-这是一个低成本云端日线交易研究系统。它每天更新 159558、SOX、NVDA、TSM、ASML、SOXS、VIX、纳指、离岸人民币和富时中国 A50 的日线数据，按中国交易日对齐上一可用海外收盘，使用滚动样本外回测生成上涨概率、评分、因子解释、相似行情和模型健康度。
+一个低成本、手机可访问的日线量化决策系统。系统自动更新 159558、SOX、SOXS、NVDA、TSM、ASML、VIX、纳指、离岸人民币与 A50 数据，训练三模型集成并生成每日评分。
 
-> 仅用于研究，不构成投资建议。不要把历史胜率视为未来承诺。
+> 仅用于研究和决策辅助，不构成任何投资建议。概率、胜率与仓位建议都可能失效。
 
-## 核心能力
+## 1. 上传到 GitHub
 
-- 手机与电脑浏览器访问
-- GitHub Actions 工作日自动更新
-- 逻辑回归、随机森林、梯度提升三模型投票
-- 严格按时间顺序滚动训练，避免随机切分导致未来信息泄漏
-- 今日评分、参考仓位、置信度和主要原因
-- 样本外回测、最大回撤、盈亏比、概率校准
-- 最近20日/60日模型健康度及失效警告
-- 免费源缺失时使用缓存并明确标记
-- 可选访问密码
-- 可导入 159558 CSV 作为备用数据
+推荐使用 GitHub Desktop，把本目录全部复制到仓库根目录后 Commit 和 Push。必须保留 `.github/workflows/daily-update.yml`。
 
-## 一、上传到 GitHub
+## 2. 第一次运行
 
-推荐使用 GitHub Desktop，隐藏目录 `.github` 和 `.streamlit` 会自动上传。
+打开仓库的 **Actions** 标签，左侧选择 **Daily market update**，点击右侧 **Run workflow**。如果看不到：
 
-1. 在 GitHub 创建仓库 `159558-ai-trader`。
-2. 使用 GitHub Desktop 克隆仓库。
-3. 将本项目目录中的全部文件复制到本地仓库根目录。
-4. Commit，然后 Push。
+1. 确认 `.github/workflows/daily-update.yml` 已经上传到 `main` 分支；
+2. 打开 `Settings → Actions → General`，允许 Actions；
+3. 在 `Workflow permissions` 选择 `Read and write permissions`。
 
-也可使用命令行：
+成功后会生成：
 
-```bash
-git clone https://github.com/kumufengchun1/159558-ai-trader.git
-cd 159558-ai-trader
-# 把本项目文件复制到这里
-git add .
-git commit -m "Initial complete system"
-git push
-```
+- `data/market.db`
+- `models/ensemble.joblib`
 
-## 二、首次更新数据
+## 3. 部署到 Render
 
-仓库页面进入：
+1. 登录 Render，选择 **New → Blueprint**；
+2. 连接 GitHub 仓库；
+3. Render 会读取 `render.yaml`；
+4. 在环境变量中设置 `APP_PASSWORD`（可选）和 `TWELVE_API_KEY`（可选）；
+5. 部署完成后即可通过手机浏览器访问。
 
-`Actions → Update market data → Run workflow`
+注意：免费实例可能休眠，首次打开需要等待几十秒。仓库里的 SQLite 数据库由 GitHub Actions 持续更新，Render 自动部署最新提交。
 
-然后进入：
-
-`Settings → Actions → General → Workflow permissions → Read and write permissions`
-
-首次运行后，`data/market_prices.parquet` 和数据状态文件会被提交到仓库。
-
-## 三、部署 Streamlit
-
-1. 登录 Streamlit Community Cloud。
-2. Create app。
-3. Repository 选择 `kumufengchun1/159558-ai-trader`。
-4. Branch 选择 `main`。
-5. Main file path 填 `app.py`。
-6. Python 选择 3.12。
-7. 点击 Deploy。
-
-如果需要密码，在 Streamlit 的 Advanced settings → Secrets 中填写：
-
-```toml
-APP_PASSWORD = "你的访问密码"
-```
-
-不要将真实密码或 API Key 上传到 GitHub。Streamlit 官方建议把 secrets 放在部署平台设置中，而不是提交到仓库。
-
-## 四、数据口径
-
-- 预测目标：159558 当日收盘相对前一交易日是否上涨。
-- 海外因子：使用 159558 交易日前最近一个可用海外收盘。
-- A50：免费 Yahoo 别名可能发生变化；系统会依次尝试多个别名并显示实际使用结果。
-- 159558：内置用户历史数据作为种子；Yahoo 成功时会用新数据覆盖同日期缓存。
-- 拆股与复权：Yahoo 下载使用自动复权；用户导入数据应尽量使用前复权或一致口径。
-
-## 五、建议的实盘验证流程
-
-1. 先连续纸面记录至少 60 个交易日。
-2. 不只看胜率，同时看平均收益、最大回撤、盈亏比和信号次数。
-3. 健康度低于 45 时暂停使用。
-4. 强信号也不建议满仓；系统给出的仓位仅是风险分级示例。
-5. 每月检查数据缺失和因子漂移。
-
-## 本地运行
+## 4. 本地运行
 
 ```bash
 python -m venv .venv
 # Windows: .venv\Scripts\activate
 # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-python update.py
-streamlit run app.py
+python scripts/update_and_train.py
+uvicorn app.main:app --reload
 ```
 
-## 项目结构
+打开 `http://127.0.0.1:8000`。
 
-```text
-app.py                       Web 主程序
-update.py                    行情更新入口
-src/config.py                资产与模型配置
-src/data.py                  下载、缓存与导入
-src/features.py              时区对齐与因子生成
-src/model.py                 三模型投票与滚动回测
-src/metrics.py               回测指标与模型健康度
-src/report.py                每日文字摘要
-.github/workflows/           自动更新任务
-.streamlit/                  页面配置和 secrets 示例
-data/                        缓存与用户历史种子
-```
+## 模型口径
+
+- 海外市场因子只使用中国交易日开盘前已经可知的数据；
+- 按时间先后 70%/30% 切分，禁止随机打乱；
+- 三模型：逻辑回归、随机森林、直方图梯度提升；
+- 最终概率为三模型平均值；
+- 数据缺失由训练集的中位数填补，不把旧值伪装成当天值；
+- 参考仓位受到模型健康度约束。
+
+## 已知限制
+
+- 免费数据源可能延迟、缺失或修订；A50 免费行情尤其不稳定；
+- Yahoo Finance 数据不属于交易所授权实时行情；
+- 当前模型是日线方向模型，不适用于盘中追涨杀跌；
+- 初期样本量有限，必须持续记录真实预测表现。

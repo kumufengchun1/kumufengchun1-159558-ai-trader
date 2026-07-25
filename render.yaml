@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: 159558-ai-trader
+    runtime: docker
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:///data/market.db
+      - key: APP_PASSWORD
+        sync: false
+      - key: TWELVE_API_KEY
+        sync: false
