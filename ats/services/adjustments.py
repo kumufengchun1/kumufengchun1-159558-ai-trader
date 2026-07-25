@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
 import math
+from datetime import UTC, datetime
 
 from ats.db.repository import Repository
 
@@ -18,7 +18,7 @@ def audit_adjustments(repo: Repository, symbols: list[str]) -> int:
     This does not invent adjustment factors. It records evidence so downstream models
     can prefer adjusted returns and operators can review possible splits/distributions.
     """
-    audited_at = datetime.now(timezone.utc).isoformat()
+    audited_at = datetime.now(UTC).isoformat()
     output: list[tuple] = []
     for symbol in symbols:
         rows = repo.list_prices(symbol)

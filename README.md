@@ -1,4 +1,4 @@
-# ATS V0.2 — Data & Feature Platform
+# ATS V0.2.1 — Data & Feature Platform
 
 159558 AI Trading System 的第二个可验收版本。本版本仍不发布交易建议，重点是把历史行情转化为**无未来数据泄漏、可审计、可重复生成**的特征数据。
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Iterable
+from collections.abc import Iterable
 
 
 @dataclass(frozen=True)
@@ -44,11 +44,11 @@ class ProviderResult:
         return bool(self.bars) and self.error is None
 
     @classmethod
-    def success(cls, provider: str, bars: Iterable[Bar]) -> "ProviderResult":
+    def success(cls, provider: str, bars: Iterable[Bar]) -> ProviderResult:
         return cls(provider=provider, bars=tuple(bars))
 
     @classmethod
-    def failure(cls, provider: str, error: str) -> "ProviderResult":
+    def failure(cls, provider: str, error: str) -> ProviderResult:
         return cls(provider=provider, bars=(), error=error)
 
 

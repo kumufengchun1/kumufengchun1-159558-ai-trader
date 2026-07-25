@@ -6,6 +6,8 @@ from ats.features.engine import FeatureEngine
 from ats.services.adjustments import audit_adjustments
 from ats.settings import settings
 
+logger = logging.getLogger(__name__)
+
 
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -17,7 +19,7 @@ def main() -> int:
     sources = [symbol for symbol in symbols if symbol != target]
     audited = audit_adjustments(repo, symbols)
     target_rows, features = FeatureEngine(repo).build(target, sources)
-    logging.info("adjustment_audit=%s target_rows=%s features=%s", audited, target_rows, features)
+    logger.info("adjustment_audit=%s target_rows=%s features=%s", audited, target_rows, features)
     return 0 if target_rows and features else 1
 
 

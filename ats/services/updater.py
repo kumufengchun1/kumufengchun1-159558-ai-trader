@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import date, timedelta
 import logging
+from datetime import UTC, date, datetime, timedelta
 
 from ats.db.repository import Repository
 from ats.domain import Asset
@@ -41,14 +41,14 @@ class MarketUpdater:
 
             latest = self.repo.latest_date(asset.symbol)
             count = self.repo.count_prices(asset.symbol)
-            status, details = assess(latest, date.today(), count, asset.required)
+            status, details = assess(latest, datetime.now(UTC).date(), count, asset.required)
             self.repo.record_quality(run_id, asset.symbol, latest, count, status, details)
 
         required_failures = sum(
             1
             for asset in assets
             if asset.required and assess(
-                self.repo.latest_date(asset.symbol), date.today(), self.repo.count_prices(asset.symbol), True
+                self.repo.latest_date(asset.symbol), datetime.now(UTC).date(), self.repo.count_prices(asset.symbol), True
             )[0] == "failed"
         )
         status = "failed" if required_failures else ("partial" if failed_assets else "success")
@@ -61,6 +61,6 @@ class MarketUpdater:
 
 
 def default_date_range(years: int = 3) -> tuple[date, date]:
-    end = date.today() + timedelta(days=1)
+    end = datetime.now(UTC).date() + timedelta(days=1)
     start = end - timedelta(days=365 * years + 10)
     return start, end

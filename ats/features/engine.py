@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from statistics import fmean, pstdev
 
 from ats.db.repository import Repository
@@ -33,7 +33,7 @@ class FeatureEngine:
     def build(self, target_symbol: str, source_symbols: list[str]) -> tuple[int, int]:
         self.repo.initialize()
         run_id = self.repo.start_feature_run(target_symbol)
-        generated_at = datetime.now(timezone.utc).isoformat()
+        generated_at = datetime.now(UTC).isoformat()
         target_rows = self.repo.list_prices(target_symbol)
         if not target_rows:
             self.repo.finish_feature_run(run_id, "failed", 0, 0, "target has no prices")

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
 import math
+from datetime import UTC, date, datetime
 
 import pandas as pd
 import yfinance as yf
@@ -36,7 +36,7 @@ class YahooProvider(MarketDataProvider):
                 return ProviderResult.failure(self.name, "empty response")
             if isinstance(frame.columns, pd.MultiIndex):
                 frame.columns = frame.columns.get_level_values(0)
-            fetched_at = datetime.now(timezone.utc)
+            fetched_at = datetime.now(UTC)
             bars = []
             for idx, row in frame.iterrows():
                 close = _num(row.get("Close"))
@@ -59,5 +59,5 @@ class YahooProvider(MarketDataProvider):
             return ProviderResult.success(self.name, bars) if bars else ProviderResult.failure(
                 self.name, "no valid rows"
             )
-        except Exception as exc:  # provider boundary: never crash the full update
+        except Exception as exc:  # noqa: BLE001 - provider boundary isolates upstream failures
             return ProviderResult.failure(self.name, f"{type(exc).__name__}: {exc}")

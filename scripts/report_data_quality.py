@@ -1,4 +1,5 @@
 import sqlite3
+
 from ats.settings import settings
 
 
@@ -16,7 +17,7 @@ def main() -> None:
     ).fetchall()
     print("asset,latest_date,row_count,status,details,note")
     for r in rows:
-        values = [r[k] if r[k] is not None else "" for k in r.keys()]
+        values = [r[k] if r[k] is not None else "" for k in r]
         print(",".join(str(v).replace(",", ";") for v in values))
 
 

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Iterator
+from collections.abc import Iterator
 
 from ats.db.schema import SCHEMA_SQL
 from ats.domain import Asset, Bar
@@ -49,7 +49,7 @@ class Repository:
         with self.connect() as conn:
             cur = conn.execute(
                 "INSERT INTO update_runs(started_at,status,assets_total) VALUES(?,?,?)",
-                (datetime.now(timezone.utc).isoformat(), "running", total),
+                (datetime.now(UTC).isoformat(), "running", total),
             )
             return int(cur.lastrowid)
 
@@ -58,7 +58,7 @@ class Repository:
             conn.execute(
                 """UPDATE update_runs SET finished_at=?,status=?,assets_updated=?,assets_failed=?,message=?
                    WHERE id=?""",
-                (datetime.now(timezone.utc).isoformat(), status, updated, failed, message, run_id),
+                (datetime.now(UTC).isoformat(), status, updated, failed, message, run_id),
             )
 
     def upsert_bars(self, bars: tuple[Bar, ...]) -> int:
@@ -100,7 +100,7 @@ class Repository:
             conn.execute(
                 """INSERT INTO provider_failures(run_id,asset_symbol,provider,occurred_at,error)
                    VALUES(?,?,?,?,?)""",
-                (run_id, asset, provider, datetime.now(timezone.utc).isoformat(), error[:2000]),
+                (run_id, asset, provider, datetime.now(UTC).isoformat(), error[:2000]),
             )
 
     def latest_date(self, symbol: str) -> str | None:
@@ -147,7 +147,7 @@ class Repository:
         with self.connect() as conn:
             cur = conn.execute(
                 "INSERT INTO feature_runs(target_symbol,started_at,status) VALUES(?,?,?)",
-                (target_symbol, datetime.now(timezone.utc).isoformat(), "running"),
+                (target_symbol, datetime.now(UTC).isoformat(), "running"),
             )
             return int(cur.lastrowid)
 
@@ -164,7 +164,7 @@ class Repository:
                 """UPDATE feature_runs SET finished_at=?,status=?,target_rows=?,feature_rows=?,message=?
                    WHERE id=?""",
                 (
-                    datetime.now(timezone.utc).isoformat(),
+                    datetime.now(UTC).isoformat(),
                     status,
                     target_rows,
                     feature_rows,
@@ -195,7 +195,7 @@ class Repository:
                     source_date,
                     lag_days,
                     rule,
-                    datetime.now(timezone.utc).isoformat(),
+                    datetime.now(UTC).isoformat(),
                 ),
             )
 

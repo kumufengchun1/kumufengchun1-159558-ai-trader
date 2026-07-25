@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ats-data-platform"
-version = "0.2.0"
+version = "0.2.1"
 description = "Reliable daily market data and feature platform for the 159558 AI Trading System"
 requires-python = ">=3.11,<3.13"
 dependencies = [
@@ -33,3 +33,7 @@ addopts = "-q"
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F"]
+

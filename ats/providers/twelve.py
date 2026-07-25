@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 import requests
 
@@ -39,7 +39,7 @@ class TwelveDataProvider(MarketDataProvider):
             if payload.get("status") == "error":
                 return ProviderResult.failure(self.name, payload.get("message", "API error"))
             values = payload.get("values") or []
-            fetched_at = datetime.now(timezone.utc)
+            fetched_at = datetime.now(UTC)
             bars = []
             for item in reversed(values):
                 bars.append(
@@ -59,5 +59,5 @@ class TwelveDataProvider(MarketDataProvider):
             return ProviderResult.success(self.name, bars) if bars else ProviderResult.failure(
                 self.name, "empty response"
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - provider boundary isolates upstream failures
             return ProviderResult.failure(self.name, f"{type(exc).__name__}: {exc}")

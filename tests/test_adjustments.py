@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 from ats.db.repository import Repository
 from ats.domain import Asset, Bar
@@ -16,7 +16,7 @@ def bar(day: date, close: float, adjusted: float) -> Bar:
         adj_close=adjusted,
         volume=1.0,
         provider="test",
-        fetched_at=datetime.now(timezone.utc),
+        fetched_at=datetime.now(UTC),
     )
 
 
