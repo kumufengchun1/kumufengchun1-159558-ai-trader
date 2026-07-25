@@ -72,3 +72,9 @@ ATS_DATABASE_PATH=data/market.db
 - 逻辑回归基准模型
 - 完整样本外指标、交易成本和最大回撤
 - 决策日志初版
+
+## V0.2.2 CI hotfix
+
+- Wrapped all Python lines to the configured 100-character limit.
+- Removed unused imports reported by Ruff.
+- Local test result: 7 passed.

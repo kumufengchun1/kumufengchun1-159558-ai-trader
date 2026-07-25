@@ -56,7 +56,8 @@ class Repository:
     def finish_run(self, run_id: int, status: str, updated: int, failed: int, message: str) -> None:
         with self.connect() as conn:
             conn.execute(
-                """UPDATE update_runs SET finished_at=?,status=?,assets_updated=?,assets_failed=?,message=?
+                """UPDATE update_runs
+                   SET finished_at=?, status=?, assets_updated=?, assets_failed=?, message=?
                    WHERE id=?""",
                 (datetime.now(UTC).isoformat(), status, updated, failed, message, run_id),
             )
@@ -119,7 +120,13 @@ class Repository:
             return int(row["n"])
 
     def record_quality(
-        self, run_id: int, symbol: str, latest: str | None, row_count: int, status: str, details: str
+        self,
+        run_id: int,
+        symbol: str,
+        latest: str | None,
+        row_count: int,
+        status: str,
+        details: str,
     ) -> None:
         with self.connect() as conn:
             conn.execute(
@@ -133,15 +140,19 @@ class Repository:
         with self.connect() as conn:
             return list(
                 conn.execute(
-                    """SELECT asset_symbol,trading_date,open,high,low,close,adj_close,volume,provider
-                       FROM daily_prices WHERE asset_symbol=? ORDER BY trading_date""",
+                    """SELECT asset_symbol, trading_date, open, high, low, close,
+                              adj_close, volume, provider
+                       FROM daily_prices
+                       WHERE asset_symbol=?
+                       ORDER BY trading_date""",
                     (symbol,),
                 ).fetchall()
             )
 
     def list_symbols(self) -> list[str]:
         with self.connect() as conn:
-            return [row["symbol"] for row in conn.execute("SELECT symbol FROM assets ORDER BY symbol")]
+            rows = conn.execute("SELECT symbol FROM assets ORDER BY symbol")
+            return [row["symbol"] for row in rows]
 
     def start_feature_run(self, target_symbol: str) -> int:
         with self.connect() as conn:
@@ -161,7 +172,8 @@ class Repository:
     ) -> None:
         with self.connect() as conn:
             conn.execute(
-                """UPDATE feature_runs SET finished_at=?,status=?,target_rows=?,feature_rows=?,message=?
+                """UPDATE feature_runs
+                   SET finished_at=?, status=?, target_rows=?, feature_rows=?, message=?
                    WHERE id=?""",
                 (
                     datetime.now(UTC).isoformat(),
@@ -208,7 +220,9 @@ class Repository:
                    target_symbol,feature_date,feature_name,value,source_symbol,source_date,
                    feature_version,generated_at
                    ) VALUES(?,?,?,?,?,?,?,?)
-                   ON CONFLICT(target_symbol,feature_date,feature_name,feature_version) DO UPDATE SET
+                   ON CONFLICT(
+                     target_symbol, feature_date, feature_name, feature_version
+                   ) DO UPDATE SET
                      value=excluded.value,source_symbol=excluded.source_symbol,
                      source_date=excluded.source_date,generated_at=excluded.generated_at""",
                 rows,

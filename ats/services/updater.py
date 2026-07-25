@@ -31,9 +31,19 @@ class MarketUpdater:
                     self.repo.upsert_bars(result.bars)
                     updated_assets += 1
                     success = True
-                    logger.info("%s updated by %s with %s rows", asset.symbol, provider.name, len(result.bars))
+                    logger.info(
+                        "%s updated by %s with %s rows",
+                        asset.symbol,
+                        provider.name,
+                        len(result.bars),
+                    )
                     break
-                self.repo.record_failure(run_id, asset.symbol, provider.name, result.error or "unknown")
+                self.repo.record_failure(
+                    run_id,
+                    asset.symbol,
+                    provider.name,
+                    result.error or "unknown",
+                )
                 logger.warning("%s/%s failed: %s", asset.symbol, provider.name, result.error)
 
             if not success:
@@ -48,7 +58,10 @@ class MarketUpdater:
             1
             for asset in assets
             if asset.required and assess(
-                self.repo.latest_date(asset.symbol), datetime.now(UTC).date(), self.repo.count_prices(asset.symbol), True
+                self.repo.latest_date(asset.symbol),
+                datetime.now(UTC).date(),
+                self.repo.count_prices(asset.symbol),
+                True,
             )[0] == "failed"
         )
         status = "failed" if required_failures else ("partial" if failed_assets else "success")

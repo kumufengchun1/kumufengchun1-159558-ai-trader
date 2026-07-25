@@ -49,7 +49,10 @@ class FeatureEngine:
 
         target_dates = [date.fromisoformat(row["trading_date"]) for row in target_rows]
         target_prices = [_price(row) for row in target_rows]
-        target_volumes = [float(row["volume"]) if row["volume"] is not None else None for row in target_rows]
+        target_volumes = [
+            float(row["volume"]) if row["volume"] is not None else None
+            for row in target_rows
+        ]
         feature_rows: list[tuple] = []
 
         def add(
@@ -79,7 +82,13 @@ class FeatureEngine:
                 prior_date = target_dates[prior_index]
                 prior_price = target_prices[prior_index]
                 prior_prior_price = target_prices[prior_index - 1] if prior_index >= 1 else None
-                add(target_date, "TARGET_RETURN_1D_LAG1", _ret(prior_price, prior_prior_price), target_symbol, prior_date)
+                add(
+                    target_date,
+                    "TARGET_RETURN_1D_LAG1",
+                    _ret(prior_price, prior_prior_price),
+                    target_symbol,
+                    prior_date,
+                )
 
                 window5 = target_prices[max(0, prior_index - 4) : prior_index + 1]
                 sma5 = _mean(window5)
@@ -114,7 +123,11 @@ class FeatureEngine:
                 add(
                     target_date,
                     "TARGET_VOLUME_RATIO_5D_LAG1",
-                    current_volume / mean_volume if current_volume is not None and mean_volume else None,
+                    (
+                        current_volume / mean_volume
+                        if current_volume is not None and mean_volume
+                        else None
+                    ),
                     target_symbol,
                     prior_date,
                 )

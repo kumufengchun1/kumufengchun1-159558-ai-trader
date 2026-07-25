@@ -11,7 +11,13 @@ from ats.settings import settings
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     assets = load_assets(settings.assets_config)
-    providers = [YahooProvider(), TwelveDataProvider(settings.twelve_api_key, settings.request_timeout_seconds)]
+    providers = [
+        YahooProvider(),
+        TwelveDataProvider(
+            settings.twelve_api_key,
+            settings.request_timeout_seconds,
+        ),
+    ]
     updater = MarketUpdater(Repository(settings.database_path), providers)
     start, end = default_date_range(years=3)
     return updater.run(assets, start, end)
