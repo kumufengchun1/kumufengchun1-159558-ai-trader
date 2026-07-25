@@ -84,3 +84,18 @@ imputation and keeps persisted coefficient names aligned with fitted coefficient
 
 - Backtest now uses the canonical internal target symbol `159558`.
 - Empty or mismatched model frames fail with a clear diagnostic instead of a pandas `KeyError`.
+
+## V0.7 Experiment Registry
+
+V0.7 introduces reproducible experiment tracking for baseline training, ensemble training, and
+walk-forward backtests. Every completed run is registered in `experiments` and
+`experiment_metrics`, with a reviewable JSON manifest under `data/experiments/`.
+
+Inspect recent experiments locally:
+
+```bash
+python -m scripts.report_experiments
+```
+
+The daily workflow now registers and commits experiment records together with `data/market.db`.
+See `docs/EXPERIMENT_REGISTRY_V07.md` for the schema and provenance rules.

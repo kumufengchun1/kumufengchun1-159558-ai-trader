@@ -284,3 +284,42 @@ CREATE TABLE IF NOT EXISTS ensemble_decisions (
 CREATE INDEX IF NOT EXISTS idx_ensemble_decisions_target_date
 ON ensemble_decisions(target_symbol, prediction_date);
 """
+
+EXPERIMENT_SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS experiments (
+    experiment_id TEXT PRIMARY KEY,
+    source_type TEXT NOT NULL,
+    source_run_id INTEGER NOT NULL,
+    target_symbol TEXT NOT NULL,
+    experiment_name TEXT NOT NULL,
+    status TEXT NOT NULL,
+    started_at TEXT NOT NULL,
+    finished_at TEXT,
+    git_commit TEXT NOT NULL,
+    data_version TEXT,
+    feature_version TEXT,
+    label_version TEXT,
+    model_name TEXT,
+    model_version TEXT,
+    strategy_name TEXT,
+    strategy_version TEXT,
+    parameters_json TEXT NOT NULL,
+    metadata_json TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    UNIQUE(source_type, source_run_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_experiments_created_at
+ON experiments(created_at);
+
+CREATE INDEX IF NOT EXISTS idx_experiments_target_symbol
+ON experiments(target_symbol, created_at);
+
+CREATE TABLE IF NOT EXISTS experiment_metrics (
+    experiment_id TEXT NOT NULL REFERENCES experiments(experiment_id) ON DELETE CASCADE,
+    metric_name TEXT NOT NULL,
+    metric_value REAL,
+    sample_name TEXT NOT NULL,
+    PRIMARY KEY (experiment_id, metric_name, sample_name)
+);
+"""

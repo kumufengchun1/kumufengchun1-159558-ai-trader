@@ -9,6 +9,7 @@ from collections.abc import Iterator
 from ats.db.schema import (
     BACKTEST_SCHEMA_SQL,
     ENSEMBLE_SCHEMA_SQL,
+    EXPERIMENT_SCHEMA_SQL,
     MODEL_SCHEMA_SQL,
     SCHEMA_SQL,
 )
@@ -36,6 +37,7 @@ class Repository:
             conn.executescript(MODEL_SCHEMA_SQL)
             conn.executescript(BACKTEST_SCHEMA_SQL)
             conn.executescript(ENSEMBLE_SCHEMA_SQL)
+            conn.executescript(EXPERIMENT_SCHEMA_SQL)
 
     def upsert_assets(self, assets: list[Asset]) -> None:
         with self.connect() as conn:
@@ -562,3 +564,81 @@ class Repository:
                    ) VALUES(?,?,?,?,?,?,?,?,?,?,?)""",
                 [(run_id, *row, generated_at) for row in rows],
             )
+
+    def get_model_run(self, run_id: int):
+        with self.connect() as conn:
+            return conn.execute("SELECT * FROM model_runs WHERE id=?", (run_id,)).fetchone()
+
+    def get_model_metrics(self, run_id: int) -> list[sqlite3.Row]:
+        with self.connect() as conn:
+            return conn.execute(
+                """SELECT metric_name, metric_value, sample_name
+                   FROM model_metrics WHERE model_run_id=?
+                   ORDER BY sample_name, metric_name""",
+                (run_id,),
+            ).fetchall()
+
+    def get_backtest_run(self, run_id: int):
+        with self.connect() as conn:
+            return conn.execute("SELECT * FROM backtest_runs WHERE id=?", (run_id,)).fetchone()
+
+    def get_backtest_metrics(self, run_id: int) -> list[sqlite3.Row]:
+        with self.connect() as conn:
+            return conn.execute(
+                """SELECT metric_name, metric_value, series_name AS sample_name
+                   FROM backtest_metrics WHERE backtest_run_id=?
+                   ORDER BY series_name, metric_name""",
+                (run_id,),
+            ).fetchall()
+
+    def latest_price_date(self, target_symbol: str) -> str | None:
+        with self.connect() as conn:
+            row = conn.execute(
+                "SELECT MAX(trading_date) AS latest_date FROM daily_prices WHERE asset_symbol=?",
+                (target_symbol,),
+            ).fetchone()
+        return str(row["latest_date"]) if row and row["latest_date"] else None
+
+    def upsert_experiment(self, values: tuple, metrics: list[tuple]) -> None:
+        with self.connect() as conn:
+            conn.execute(
+                """INSERT INTO experiments(
+                   experiment_id,source_type,source_run_id,target_symbol,experiment_name,
+                   status,started_at,finished_at,git_commit,data_version,feature_version,
+                   label_version,model_name,model_version,strategy_name,strategy_version,
+                   parameters_json,metadata_json,created_at
+                   ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                   ON CONFLICT(source_type, source_run_id) DO UPDATE SET
+                     experiment_name=excluded.experiment_name,status=excluded.status,
+                     finished_at=excluded.finished_at,git_commit=excluded.git_commit,
+                     data_version=excluded.data_version,parameters_json=excluded.parameters_json,
+                     metadata_json=excluded.metadata_json""",
+                values,
+            )
+            experiment_id = values[0]
+            conn.execute(
+                "DELETE FROM experiment_metrics WHERE experiment_id=?", (experiment_id,)
+            )
+            if metrics:
+                conn.executemany(
+                    """INSERT INTO experiment_metrics(
+                       experiment_id,metric_name,metric_value,sample_name
+                       ) VALUES(?,?,?,?)""",
+                    [(experiment_id, *metric) for metric in metrics],
+                )
+
+    def get_experiment(self, experiment_id: str):
+        with self.connect() as conn:
+            return conn.execute(
+                "SELECT * FROM experiments WHERE experiment_id=?", (experiment_id,)
+            ).fetchone()
+
+    def list_experiment_metrics(self, experiment_id: str) -> list[sqlite3.Row]:
+        with self.connect() as conn:
+            return conn.execute(
+                """SELECT metric_name,metric_value,sample_name
+                   FROM experiment_metrics WHERE experiment_id=?
+                   ORDER BY sample_name,metric_name""",
+                (experiment_id,),
+            ).fetchall()
+
