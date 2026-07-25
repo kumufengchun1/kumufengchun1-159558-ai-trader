@@ -1,0 +1,11 @@
+asset,state,alias,latest,required,message,errors
+159558,ok,159558.SZ,2026-07-24,True,ok: 2026-07-24,
+SOX,ok,^SOX,2026-07-24,True,ok: 2026-07-24,
+NVDA,ok,NVDA,2026-07-24,True,ok: 2026-07-24,
+TSM,ok,TSM,2026-07-24,False,ok: 2026-07-24,
+ASML,ok,ASML,2026-07-24,False,ok: 2026-07-24,
+SOXS,ok,SOXS,2026-07-24,False,ok: 2026-07-24,
+VIX,ok,^VIX,2026-07-24,False,ok: 2026-07-24,
+NASDAQ,ok,^IXIC,2026-07-24,False,ok: 2026-07-24,
+USDCNH,ok,CNH=X,2026-07-24,False,ok: 2026-07-24,
+A50,missing,,,False,missing,XIN9.F: empty | CN1!: empty | CN=F: empty
