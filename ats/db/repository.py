@@ -6,7 +6,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from collections.abc import Iterator
 
-from ats.db.schema import SCHEMA_SQL
+from ats.db.schema import (
+    BACKTEST_SCHEMA_SQL,
+    ENSEMBLE_SCHEMA_SQL,
+    MODEL_SCHEMA_SQL,
+    SCHEMA_SQL,
+)
 from ats.domain import Asset, Bar
 
 
@@ -28,6 +33,9 @@ class Repository:
     def initialize(self) -> None:
         with self.connect() as conn:
             conn.executescript(SCHEMA_SQL)
+            conn.executescript(MODEL_SCHEMA_SQL)
+            conn.executescript(BACKTEST_SCHEMA_SQL)
+            conn.executescript(ENSEMBLE_SCHEMA_SQL)
 
     def upsert_assets(self, assets: list[Asset]) -> None:
         with self.connect() as conn:
@@ -258,3 +266,299 @@ class Repository:
                 (target_symbol, version),
             ).fetchone()
             return int(row["n"])
+
+    def replace_labels(self, target_symbol: str, version: str, rows: list[tuple]) -> int:
+        with self.connect() as conn:
+            conn.execute(
+                "DELETE FROM label_values WHERE target_symbol=? AND label_version=?",
+                (target_symbol, version),
+            )
+            if rows:
+                conn.executemany(
+                    """INSERT INTO label_values(
+                       target_symbol,label_date,label_name,value,horizon_sessions,
+                       label_version,generated_at
+                       ) VALUES(?,?,?,?,?,?,?)""",
+                    rows,
+                )
+        return len(rows)
+
+    def load_model_frame(
+        self,
+        target_symbol: str,
+        feature_version: str,
+        label_name: str,
+        label_version: str,
+    ):
+        import pandas as pd
+
+        with self.connect() as conn:
+            feature_rows = conn.execute(
+                """SELECT feature_date, feature_name, value
+                   FROM feature_values
+                   WHERE target_symbol=? AND feature_version=?
+                   ORDER BY feature_date, feature_name""",
+                (target_symbol, feature_version),
+            ).fetchall()
+            label_rows = conn.execute(
+                """SELECT label_date, value
+                   FROM label_values
+                   WHERE target_symbol=? AND label_name=? AND label_version=?
+                   ORDER BY label_date""",
+                (target_symbol, label_name, label_version),
+            ).fetchall()
+        if not feature_rows or not label_rows:
+            return pd.DataFrame()
+        features = pd.DataFrame(feature_rows, columns=["feature_date", "feature_name", "value"])
+        pivot = features.pivot(index="feature_date", columns="feature_name", values="value")
+        pivot = pivot.reset_index()
+        labels = pd.DataFrame(label_rows, columns=["feature_date", "label"])
+        return pivot.merge(labels, on="feature_date", how="inner")
+
+    def start_model_run(
+        self,
+        target_symbol: str,
+        model_name: str,
+        model_version: str,
+        feature_version: str,
+        label_version: str,
+        train_start: str,
+        train_end: str,
+        test_start: str,
+        test_end: str,
+        train_rows: int,
+        test_rows: int,
+    ) -> int:
+        with self.connect() as conn:
+            cursor = conn.execute(
+                """INSERT INTO model_runs(
+                   target_symbol,model_name,model_version,feature_version,label_version,
+                   started_at,status,train_start,train_end,test_start,test_end,
+                   train_rows,test_rows
+                   ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (
+                    target_symbol,
+                    model_name,
+                    model_version,
+                    feature_version,
+                    label_version,
+                    datetime.now(UTC).isoformat(),
+                    "running",
+                    train_start,
+                    train_end,
+                    test_start,
+                    test_end,
+                    train_rows,
+                    test_rows,
+                ),
+            )
+            return int(cursor.lastrowid)
+
+    def finish_model_run(self, run_id: int, status: str, message: str) -> None:
+        with self.connect() as conn:
+            conn.execute(
+                """UPDATE model_runs
+                   SET finished_at=?, status=?, message=?
+                   WHERE id=?""",
+                (datetime.now(UTC).isoformat(), status, message, run_id),
+            )
+
+    def save_model_metrics(
+        self,
+        run_id: int,
+        metrics: dict[str, float | None],
+        sample_name: str,
+    ) -> None:
+        with self.connect() as conn:
+            conn.executemany(
+                """INSERT OR REPLACE INTO model_metrics(
+                   model_run_id,metric_name,metric_value,sample_name
+                   ) VALUES(?,?,?,?)""",
+                [(run_id, name, value, sample_name) for name, value in metrics.items()],
+            )
+
+    def save_model_coefficients(self, run_id: int, coefficients: dict[str, float]) -> None:
+        with self.connect() as conn:
+            conn.executemany(
+                """INSERT OR REPLACE INTO model_coefficients(
+                   model_run_id,feature_name,coefficient
+                   ) VALUES(?,?,?)""",
+                [(run_id, name, float(value)) for name, value in coefficients.items()],
+            )
+
+    def save_predictions(
+        self,
+        run_id: int,
+        target_symbol: str,
+        dates: list[str],
+        probabilities: list[float],
+        predicted: list[int],
+        actual: list[int],
+        actual_returns: list[float],
+        sample_name: str,
+    ) -> None:
+        generated_at = datetime.now(UTC).isoformat()
+        rows = [
+            (
+                run_id,
+                target_symbol,
+                prediction_date,
+                float(probability),
+                int(predicted_class),
+                int(actual_class),
+                float(actual_return),
+                sample_name,
+                generated_at,
+            )
+            for prediction_date, probability, predicted_class, actual_class, actual_return
+            in zip(
+                dates,
+                probabilities,
+                predicted,
+                actual,
+                actual_returns,
+                strict=True,
+            )
+        ]
+        with self.connect() as conn:
+            conn.executemany(
+                """INSERT OR REPLACE INTO predictions(
+                   model_run_id,target_symbol,prediction_date,probability_up,
+                   predicted_class,actual_class,actual_return,sample_name,generated_at
+                   ) VALUES(?,?,?,?,?,?,?,?,?)""",
+                rows,
+            )
+
+    def save_decision_journal(self, rows: list[tuple]) -> None:
+        with self.connect() as conn:
+            conn.executemany(
+                """INSERT OR REPLACE INTO decision_journal(
+                   target_symbol,decision_date,model_run_id,probability_up,signal,
+                   confidence,actual_return,outcome,created_at
+                   ) VALUES(?,?,?,?,?,?,?,?,?)""",
+                rows,
+            )
+
+
+    def start_backtest_run(
+        self,
+        target_symbol: str,
+        strategy_name: str,
+        strategy_version: str,
+        model_name: str,
+        model_version: str,
+        feature_version: str,
+        label_version: str,
+        start_date: str,
+        end_date: str,
+        min_train_rows: int,
+        rebalance_rows: int,
+        transaction_cost_bps: float,
+        slippage_bps: float,
+    ) -> int:
+        with self.connect() as conn:
+            cursor = conn.execute(
+                """INSERT INTO backtest_runs(
+                   target_symbol,strategy_name,strategy_version,model_name,model_version,
+                   feature_version,label_version,started_at,status,start_date,end_date,
+                   min_train_rows,rebalance_rows,transaction_cost_bps,slippage_bps
+                   ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (
+                    target_symbol,
+                    strategy_name,
+                    strategy_version,
+                    model_name,
+                    model_version,
+                    feature_version,
+                    label_version,
+                    datetime.now(UTC).isoformat(),
+                    "running",
+                    start_date,
+                    end_date,
+                    min_train_rows,
+                    rebalance_rows,
+                    transaction_cost_bps,
+                    slippage_bps,
+                ),
+            )
+            return int(cursor.lastrowid)
+
+    def finish_backtest_run(self, run_id: int, status: str, message: str) -> None:
+        with self.connect() as conn:
+            conn.execute(
+                """UPDATE backtest_runs
+                   SET finished_at=?, status=?, message=?
+                   WHERE id=?""",
+                (datetime.now(UTC).isoformat(), status, message, run_id),
+            )
+
+    def save_backtest_metrics(
+        self,
+        run_id: int,
+        metrics: dict[str, float | None],
+        series_name: str,
+    ) -> None:
+        with self.connect() as conn:
+            conn.executemany(
+                """INSERT OR REPLACE INTO backtest_metrics(
+                   backtest_run_id,metric_name,metric_value,series_name
+                   ) VALUES(?,?,?,?)""",
+                [(run_id, name, value, series_name) for name, value in metrics.items()],
+            )
+
+    def save_backtest_daily(self, run_id: int, rows: list[tuple]) -> None:
+        if not rows:
+            return
+        generated_at = datetime.now(UTC).isoformat()
+        values = [(*row, generated_at) for row in rows]
+        with self.connect() as conn:
+            conn.executemany(
+                """INSERT OR REPLACE INTO backtest_daily(
+                   backtest_run_id,trading_date,probability_up,position,prior_position,
+                   turnover,gross_return,transaction_cost,net_return,benchmark_return,
+                   strategy_equity,benchmark_equity,train_start,train_end,generated_at
+                   ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                [(run_id, *row) for row in values],
+            )
+
+
+    def save_ensemble_weights(
+        self,
+        run_id: int,
+        weights: dict[str, tuple[float | None, float]],
+    ) -> None:
+        with self.connect() as conn:
+            conn.executemany(
+                """INSERT OR REPLACE INTO ensemble_weights(
+                   model_run_id,component_name,calibration_brier,ensemble_weight
+                   ) VALUES(?,?,?,?)""",
+                [
+                    (run_id, name, brier, weight)
+                    for name, (brier, weight) in weights.items()
+                ],
+            )
+
+    def save_ensemble_component_predictions(
+        self,
+        run_id: int,
+        rows: list[tuple[str, str, float, float]],
+    ) -> None:
+        with self.connect() as conn:
+            conn.executemany(
+                """INSERT OR REPLACE INTO ensemble_component_predictions(
+                   model_run_id,prediction_date,component_name,raw_probability,
+                   calibrated_probability
+                   ) VALUES(?,?,?,?,?)""",
+                [(run_id, *row) for row in rows],
+            )
+
+    def save_ensemble_decisions(self, run_id: int, rows: list[tuple]) -> None:
+        generated_at = datetime.now(UTC).isoformat()
+        with self.connect() as conn:
+            conn.executemany(
+                """INSERT OR REPLACE INTO ensemble_decisions(
+                   model_run_id,target_symbol,prediction_date,probability_up,agreement,
+                   confidence,position,signal,actual_return,outcome,generated_at
+                   ) VALUES(?,?,?,?,?,?,?,?,?,?,?)""",
+                [(run_id, *row, generated_at) for row in rows],
+            )

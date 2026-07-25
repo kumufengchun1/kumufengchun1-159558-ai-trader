@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ATS · 159558</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/dashboard.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">AI TRADING SYSTEM</p>
+      <h1>159558 每日决策台</h1>
+    </div>
+    <div class="status-pill {{ 'ok' if snapshot.database_ready else 'bad' }}">
+      {{ '数据已连接' if snapshot.database_ready else '等待数据库' }}
+    </div>
+  </header>
+
+  <main>
+    {% set d = snapshot.latest_decision %}
+    <section class="hero-grid">
+      <article class="card decision-card">
+        <p class="label">最新模型决策</p>
+        {% if d %}
+        <div class="decision-line">
+          <div>
+            <div class="signal">{{ d.signal }}</div>
+            <div class="date">交易日 {{ d.prediction_date }}</div>
+          </div>
+          <div class="position">{{ '%.0f'|format(d.position * 100) }}<span>%</span></div>
+        </div>
+        <div class="meter"><span style="width: {{ d.probability_up * 100 }}%"></span></div>
+        <div class="stats three">
+          <div><b>{{ '%.1f'|format(d.probability_up * 100) }}%</b><span>上涨概率</span></div>
+          <div><b>{{ '%.1f'|format(d.confidence * 100) }}%</b><span>置信度</span></div>
+          <div><b>{{ '%.1f'|format(d.agreement * 100) }}%</b><span>模型一致性</span></div>
+        </div>
+        {% else %}
+        <div class="empty">尚无集成模型决策。Daily market update 完成训练后会自动出现。</div>
+        {% endif %}
+      </article>
+
+      <article class="card system-card">
+        <p class="label">系统运行状态</p>
+        {% set u = snapshot.update_run %}
+        {% set e = snapshot.ensemble_run %}
+        {% set b = snapshot.backtest_run %}
+        <div class="status-row"><span>数据更新</span><b>{{ u.status if u else '未运行' }}</b></div>
+        <div class="status-row"><span>集成模型</span><b>{{ e.status if e else '未训练' }}</b></div>
+        <div class="status-row"><span>滚动回测</span><b>{{ b.status if b else '未运行' }}</b></div>
+        <div class="status-row"><span>最近完成</span><b>{{ u.finished_at[:16] if u and u.finished_at else '—' }}</b></div>
+      </article>
+    </section>
+
+    <section class="grid two">
+      <article class="card">
+        <div class="section-head"><div><p class="label">样本外回测</p><h2>策略净值 vs 买入持有</h2></div></div>
+        <svg id="equity-chart" viewBox="0 0 760 280" role="img" aria-label="净值曲线"></svg>
+        <div class="legend"><span><i class="strategy"></i>策略</span><span><i class="benchmark"></i>基准</span></div>
+      </article>
+
+      <article class="card">
+        <p class="label">核心回测指标</p>
+        <div class="metric-grid">
+          {% for m in snapshot.backtest_metrics %}
+            {% if m.series_name == 'strategy' and m.metric_name in [
+              'total_return','annual_return','sharpe_ratio','max_drawdown',
+              'invested_ratio','position_changes'
+            ] %}
+            <div class="metric">
+              <span>{{ m.metric_name }}</span>
+              <b>
+                {% if m.metric_name in ['total_return','annual_return','max_drawdown','invested_ratio'] %}
+                  {{ '%.1f'|format(m.metric_value * 100) }}%
+                {% else %}
+                  {{ '%.2f'|format(m.metric_value) }}
+                {% endif %}
+              </b>
+            </div>
+            {% endif %}
+          {% else %}
+            <div class="empty">暂无回测指标</div>
+          {% endfor %}
+        </div>
+      </article>
+    </section>
+
+    <section class="grid two">
+      <article class="card">
+        <p class="label">集成模型权重</p>
+        {% for w in snapshot.weights %}
+        <div class="weight-row">
+          <span>{{ w.component_name }}</span>
+          <div class="weight-track"><i style="width: {{ w.ensemble_weight * 100 }}%"></i></div>
+          <b>{{ '%.1f'|format(w.ensemble_weight * 100) }}%</b>
+        </div>
+        {% else %}
+        <div class="empty">暂无模型权重</div>
+        {% endfor %}
+      </article>
+
+      <article class="card">
+        <p class="label">数据质量</p>
+        <div class="quality-list">
+          {% for q in snapshot.quality %}
+          <div class="quality-row">
+            <span class="dot {{ q.status }}"></span>
+            <b>{{ q.asset_symbol }}</b>
+            <span>{{ q.latest_date or '—' }}</span>
+            <span>{{ q.row_count }} rows</span>
+          </div>
+          {% else %}
+          <div class="empty">暂无数据质量记录</div>
+          {% endfor %}
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <footer>ATS V0.6 · 研究系统，不构成投资建议</footer>
+  <script>window.ATS_EQUITY = {{ snapshot.equity | tojson }};</script>
+  <script src="{{ url_for('static', path='/dashboard.js') }}"></script>
+</body>
+</html>
