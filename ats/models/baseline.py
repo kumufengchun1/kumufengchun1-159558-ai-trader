@@ -16,7 +16,7 @@ from ats.features.engine import FEATURE_VERSION
 from ats.labels import LABEL_NAME, LABEL_VERSION
 
 MODEL_NAME = "logistic_regression"
-MODEL_VERSION = "v0.3.0"
+MODEL_VERSION = "v0.6.1"
 
 
 @dataclass(frozen=True)
@@ -57,7 +57,14 @@ class BaselineTrainer:
         train = usable.iloc[:split]
         test = usable.iloc[split:]
         x_train = train.loc[:, feature_names]
-        x_test = test.loc[:, feature_names]
+        nonempty_features = tuple(
+            column for column in feature_names if x_train[column].notna().any()
+        )
+        if not nonempty_features:
+            raise ValueError("training sample has no usable features")
+        x_train = x_train.loc[:, nonempty_features]
+        x_test = test.loc[:, nonempty_features]
+        feature_names = nonempty_features
         y_train = (train["label"] > 0).astype(int)
         y_test = (test["label"] > 0).astype(int)
         if y_train.nunique() < 2:

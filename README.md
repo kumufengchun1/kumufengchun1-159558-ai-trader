@@ -71,3 +71,10 @@ python -m scripts.run_web
 Open `http://localhost:8000`. The included `Dockerfile` and `render.yaml` support deployment to
 Render. GitHub Actions remains responsible for updating `data/market.db`; the web application
 only reads and presents the latest committed results.
+
+
+## V0.6.1 hotfix
+
+Baseline training now excludes features that are completely missing in the chronological
+training window. This prevents scikit-learn from silently dropping columns during median
+imputation and keeps persisted coefficient names aligned with fitted coefficients.

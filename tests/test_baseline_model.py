@@ -46,6 +46,18 @@ def test_baseline_uses_chronological_holdout_and_persists_results(tmp_path):
                 generated_at,
             )
         )
+        features.append(
+            (
+                "159558",
+                trading_date.isoformat(),
+                "ALL_MISSING_SIGNAL",
+                None,
+                "159558",
+                trading_date.isoformat(),
+                FEATURE_VERSION,
+                generated_at,
+            )
+        )
     repo.upsert_bars(tuple(bars))
     repo.upsert_feature_values(features)
     build_labels(repo, "159558")
@@ -54,6 +66,7 @@ def test_baseline_uses_chronological_holdout_and_persists_results(tmp_path):
 
     assert result.train_rows > result.test_rows
     assert result.metrics["accuracy"] is not None
+    assert "ALL_MISSING_SIGNAL" not in result.feature_names
     with repo.connect() as conn:
         run = conn.execute("SELECT * FROM model_runs WHERE id=?", (result.run_id,)).fetchone()
         prediction_count = conn.execute(
