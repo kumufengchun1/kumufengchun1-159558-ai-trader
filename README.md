@@ -78,3 +78,7 @@ ATS_DATABASE_PATH=data/market.db
 - Wrapped all Python lines to the configured 100-character limit.
 - Removed unused imports reported by Ruff.
 - Local test result: 7 passed.
+
+## V0.2.3 hotfix
+
+Fixes the data-quality report crash caused by iterating over sqlite3.Row values as if they were column names. The report now uses explicit columns and the csv module, with a regression test.
