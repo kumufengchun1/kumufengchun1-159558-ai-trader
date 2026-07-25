@@ -1,61 +1,74 @@
-# 159558 AI Trading System
+# ATS V0.2 — Data & Feature Platform
 
-一个低成本、手机可访问的日线量化决策系统。系统自动更新 159558、SOX、SOXS、NVDA、TSM、ASML、VIX、纳指、离岸人民币与 A50 数据，训练三模型集成并生成每日评分。
+159558 AI Trading System 的第二个可验收版本。本版本仍不发布交易建议，重点是把历史行情转化为**无未来数据泄漏、可审计、可重复生成**的特征数据。
 
-> 仅用于研究和决策辅助，不构成任何投资建议。概率、胜率与仓位建议都可能失效。
+## V0.2 已完成
 
-## 1. 上传到 GitHub
+- SQLite 行情数据库与幂等更新
+- Yahoo → Twelve Data 供应商降级链
+- A股目标交易日与海外前一交易日严格对齐
+- 周末、美国/中国节假日错位处理
+- Feature Store（特征仓库）
+- 159558 自身滞后趋势、成交量、波动率因子
+- SOX、SOXS、NVDA、TSM、ASML、VIX、NASDAQ、USDCNH、A50代理隔夜收益因子
+- 原始收盘价与复权价审计
+- 拆分、分红或异常跳变审核记录
+- CI 自动测试
+- 每日更新后自动重建 V0.2 特征
 
-推荐使用 GitHub Desktop，把本目录全部复制到仓库根目录后 Commit 和 Push。必须保留 `.github/workflows/daily-update.yml`。
+## 核心防泄漏规则
 
-## 2. 第一次运行
+对 159558 的交易日 `T`：
 
-打开仓库的 **Actions** 标签，左侧选择 **Daily market update**，点击右侧 **Run workflow**。如果看不到：
+- 海外因子只允许使用严格早于 `T` 的最后一个海外交易日；
+- 159558 自身技术因子只允许使用 `T-1` 及更早的数据；
+- 每个特征都保存来源资产和来源日期，可追溯检查。
 
-1. 确认 `.github/workflows/daily-update.yml` 已经上传到 `main` 分支；
-2. 打开 `Settings → Actions → General`，允许 Actions；
-3. 在 `Workflow permissions` 选择 `Read and write permissions`。
+例如 159558 在周一开盘前的信号，只会使用上周五或更早的美股收盘数据，不会使用周一尚未发生的海外行情。
 
-成功后会生成：
+## 数据表
 
-- `data/market.db`
-- `models/ensemble.joblib`
+- `daily_prices`：标准化日线
+- `alignment_map`：目标日与来源日映射
+- `feature_values`：版本化特征仓库
+- `adjustment_audit`：复权和异常跳变审计
+- `feature_runs`：每次特征生成记录
+- `data_quality` / `provider_failures`：数据质量和供应商错误
 
-## 3. 部署到 Render
-
-1. 登录 Render，选择 **New → Blueprint**；
-2. 连接 GitHub 仓库；
-3. Render 会读取 `render.yaml`；
-4. 在环境变量中设置 `APP_PASSWORD`（可选）和 `TWELVE_API_KEY`（可选）；
-5. 部署完成后即可通过手机浏览器访问。
-
-注意：免费实例可能休眠，首次打开需要等待几十秒。仓库里的 SQLite 数据库由 GitHub Actions 持续更新，Render 自动部署最新提交。
-
-## 4. 本地运行
+## 本地运行
 
 ```bash
-python -m venv .venv
-# Windows: .venv\Scripts\activate
-# macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt
-python scripts/update_and_train.py
-uvicorn app.main:app --reload
+python -m pip install -r requirements-dev.txt
+python -m scripts.update_market
+python -m scripts.build_features
+python -m scripts.report_data_quality
+python -m scripts.report_feature_status
+pytest
 ```
 
-打开 `http://127.0.0.1:8000`。
+可选环境变量：
 
-## 模型口径
+```text
+TWELVE_API_KEY=你的 Twelve Data 密钥
+ATS_DATABASE_PATH=data/market.db
+```
 
-- 海外市场因子只使用中国交易日开盘前已经可知的数据；
-- 按时间先后 70%/30% 切分，禁止随机打乱；
-- 三模型：逻辑回归、随机森林、直方图梯度提升；
-- 最终概率为三模型平均值；
-- 数据缺失由训练集的中位数填补，不把旧值伪装成当天值；
-- 参考仓位受到模型健康度约束。
+## GitHub Actions
 
-## 已知限制
+1. 推送代码后先确认 `CI` 成功。
+2. 打开 `Actions → Daily market update → Run workflow`。
+3. 工作流依次更新行情、生成复权审计、构建特征、输出质量报告并提交 `data/market.db`。
 
-- 免费数据源可能延迟、缺失或修订；A50 免费行情尤其不稳定；
-- Yahoo Finance 数据不属于交易所授权实时行情；
-- 当前模型是日线方向模型，不适用于盘中追涨杀跌；
-- 初期样本量有限，必须持续记录真实预测表现。
+## 当前边界
+
+- `A50_PROXY` 是免费指数代理，不等同于富时中国 A50 连续夜盘期货。
+- V0.2 不训练模型、不计算胜率、不提供仓位建议。
+- 数据供应商授权、稳定性和代码可用性仍需持续监控。
+
+## 下一版本 V0.3
+
+- 目标标签定义（收盘方向、开盘至收盘、收益区间）
+- Walk-forward 滚动回测
+- 逻辑回归基准模型
+- 完整样本外指标、交易成本和最大回撤
+- 决策日志初版

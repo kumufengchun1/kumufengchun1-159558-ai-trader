@@ -1,0 +1,91 @@
+assets:
+  - symbol: "159558"
+    name: "半导体设备ETF"
+    market: "CN"
+    timezone: "Asia/Shanghai"
+    currency: "CNY"
+    yahoo: "159558.SZ"
+    twelve: null
+    required: true
+
+  - symbol: "SOX"
+    name: "费城半导体指数"
+    market: "US"
+    timezone: "America/New_York"
+    currency: "USD"
+    yahoo: "^SOX"
+    twelve: "SOX"
+    required: true
+
+  - symbol: "SOXS"
+    name: "Direxion Daily Semiconductor Bear 3X Shares"
+    market: "US"
+    timezone: "America/New_York"
+    currency: "USD"
+    yahoo: "SOXS"
+    twelve: "SOXS"
+    required: true
+
+  - symbol: "NVDA"
+    name: "NVIDIA"
+    market: "US"
+    timezone: "America/New_York"
+    currency: "USD"
+    yahoo: "NVDA"
+    twelve: "NVDA"
+    required: true
+
+  - symbol: "TSM"
+    name: "Taiwan Semiconductor ADR"
+    market: "US"
+    timezone: "America/New_York"
+    currency: "USD"
+    yahoo: "TSM"
+    twelve: "TSM"
+    required: true
+
+  - symbol: "ASML"
+    name: "ASML ADR"
+    market: "US"
+    timezone: "America/New_York"
+    currency: "USD"
+    yahoo: "ASML"
+    twelve: "ASML"
+    required: true
+
+  - symbol: "VIX"
+    name: "CBOE Volatility Index"
+    market: "US"
+    timezone: "America/Chicago"
+    currency: "INDEX"
+    yahoo: "^VIX"
+    twelve: "VIX"
+    required: true
+
+  - symbol: "NASDAQ"
+    name: "Nasdaq Composite"
+    market: "US"
+    timezone: "America/New_York"
+    currency: "INDEX"
+    yahoo: "^IXIC"
+    twelve: "IXIC"
+    required: false
+
+  - symbol: "USDCNH"
+    name: "美元兑离岸人民币"
+    market: "FX"
+    timezone: "UTC"
+    currency: "CNH"
+    yahoo: "CNH=X"
+    twelve: "USD/CNH"
+    required: false
+
+  - symbol: "A50_PROXY"
+    name: "富时中国A50指数代理"
+    market: "SG"
+    timezone: "Asia/Singapore"
+    currency: "INDEX"
+    yahoo: "XIN9.SI"
+    twelve: null
+    required: false
+    note: "免费源中的指数代理，不等同于连续夜盘期货；页面必须明确展示该说明。"

@@ -1,9 +1,8 @@
 __pycache__/
-*.py[cod]
+.pytest_cache/
+.ruff_cache/
 .venv/
 .env
-secrets.toml
-*.db
-models/*.joblib
-.pytest_cache/
+*.pyc
+*.log
 .DS_Store
