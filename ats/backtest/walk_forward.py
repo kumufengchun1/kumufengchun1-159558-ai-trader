@@ -15,7 +15,7 @@ from ats.labels import LABEL_NAME, LABEL_VERSION
 from ats.models.baseline import MODEL_NAME, MODEL_VERSION
 
 STRATEGY_NAME = "logistic_long_cash"
-STRATEGY_VERSION = "v0.4.0"
+STRATEGY_VERSION = "v0.6.2"
 TRADING_DAYS = 252
 
 
@@ -58,6 +58,10 @@ class WalkForwardBacktester:
             LABEL_NAME,
             LABEL_VERSION,
         )
+        if frame.empty or "label" not in frame.columns:
+            raise ValueError(
+                f"no joined feature and label rows for target_symbol={target_symbol!r}"
+            )
         usable = frame.dropna(subset=["label"]).sort_values("feature_date").reset_index(drop=True)
         if len(usable) <= self.min_train_rows:
             raise ValueError(

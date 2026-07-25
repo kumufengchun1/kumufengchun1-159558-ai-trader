@@ -78,3 +78,9 @@ only reads and presents the latest committed results.
 Baseline training now excludes features that are completely missing in the chronological
 training window. This prevents scikit-learn from silently dropping columns during median
 imputation and keeps persisted coefficient names aligned with fitted coefficients.
+
+
+## V0.6.2 hotfix
+
+- Backtest now uses the canonical internal target symbol `159558`.
+- Empty or mismatched model frames fail with a clear diagnostic instead of a pandas `KeyError`.
