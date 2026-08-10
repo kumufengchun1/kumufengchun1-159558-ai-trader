@@ -1,0 +1,42 @@
+{
+  "created_at": "2026-08-10T23:51:13.371348+00:00",
+  "data_version": "2026-08-10",
+  "experiment_id": "EXP-MODEL-000025",
+  "experiment_name": "logistic_regression:v0.6.1",
+  "feature_version": "v0.2.0",
+  "finished_at": "2026-08-10T23:51:13.366134+00:00",
+  "git_commit": "de9c750fba9a9bd87819a94ad2c5dd84e1c484de",
+  "label_version": "v0.3.0",
+  "metadata": {
+    "feature_count": 11,
+    "message": "chronological holdout complete",
+    "test_end": "2026-08-10",
+    "test_rows": 131,
+    "test_start": "2026-01-23",
+    "train_end": "2026-01-22",
+    "train_rows": 390,
+    "train_start": "2024-06-19"
+  },
+  "metrics": {
+    "holdout": {
+      "accuracy": 0.648854961832061,
+      "brier_score": 0.24013931291115478,
+      "log_loss": 0.6941290727564905,
+      "positive_rate": 0.5725190839694656,
+      "roc_auc": 0.6447619047619048
+    }
+  },
+  "model_name": "logistic_regression",
+  "model_version": "v0.6.1",
+  "parameters": {
+    "random_state": 42,
+    "test_fraction": 0.2
+  },
+  "source_run_id": 25,
+  "source_type": "model",
+  "started_at": "2026-08-10T23:51:13.314717+00:00",
+  "status": "success",
+  "strategy_name": null,
+  "strategy_version": null,
+  "target_symbol": "159558"
+}
