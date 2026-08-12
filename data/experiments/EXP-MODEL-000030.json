@@ -1,0 +1,48 @@
+{
+  "created_at": "2026-08-12T23:59:16.171424+00:00",
+  "data_version": "2026-08-12",
+  "experiment_id": "EXP-MODEL-000030",
+  "experiment_name": "calibrated_ensemble:v0.5.0",
+  "feature_version": "v0.2.0",
+  "finished_at": "2026-08-12T23:59:16.168383+00:00",
+  "git_commit": "c48a5464ac1370efea538a75e3cb3afde21e32fe",
+  "label_version": "v0.3.0",
+  "metadata": {
+    "calibration_rows": 78,
+    "component_weights": {
+      "extra_trees": 0.3331979072103616,
+      "hist_gradient_boosting": 0.3333733113903694,
+      "logistic": 0.33342878139926896
+    },
+    "message": "temporal calibration and weighted ensemble complete",
+    "test_end": "2026-08-12",
+    "test_rows": 131,
+    "test_start": "2026-01-27",
+    "train_end": "2026-01-26",
+    "train_rows": 392,
+    "train_start": "2024-06-19"
+  },
+  "metrics": {
+    "holdout": {
+      "accuracy": 0.42748091603053434,
+      "active_rate": 0.0,
+      "brier_score": 0.2515165883962495,
+      "log_loss": 0.6961805789372303,
+      "mean_agreement": 0.9929266666816235,
+      "mean_confidence": 0.02646251089622247,
+      "mean_position": 0.0,
+      "positive_rate": 0.5725190839694656,
+      "roc_auc": 0.6002380952380952
+    }
+  },
+  "model_name": "calibrated_ensemble",
+  "model_version": "v0.5.0",
+  "parameters": {},
+  "source_run_id": 30,
+  "source_type": "model",
+  "started_at": "2026-08-12T23:59:15.624293+00:00",
+  "status": "success",
+  "strategy_name": null,
+  "strategy_version": null,
+  "target_symbol": "159558"
+}
