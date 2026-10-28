@@ -1,0 +1,55 @@
+{
+  "created_at": "2026-10-28T02:15:59.598592+00:00",
+  "data_version": "2026-10-28",
+  "experiment_id": "EXP-BACKTEST-000069",
+  "experiment_name": "logistic_long_cash:v0.6.2",
+  "feature_version": "v0.2.0",
+  "finished_at": "2026-10-28T02:15:59.593946+00:00",
+  "git_commit": "9cf11625ffa8d564d1ea1fa28c6af326b0017abd",
+  "label_version": "v0.3.0",
+  "metadata": {
+    "end_date": "2026-10-28",
+    "message": "expanding walk-forward complete",
+    "retrains": 23,
+    "rows": 452,
+    "start_date": "2024-12-13"
+  },
+  "metrics": {
+    "benchmark": {
+      "annual_volatility": 0.45745646267504986,
+      "cagr": 0.3920282011475331,
+      "max_drawdown": -0.5186921657118074,
+      "positive_day_rate": 0.5110619469026548,
+      "sharpe": 0.9513453554828099,
+      "total_return": 0.8098992903132141
+    },
+    "strategy": {
+      "annual_volatility": 0.2561657301810666,
+      "cagr": 0.855278698564927,
+      "exposure": 0.2920353982300885,
+      "max_drawdown": -0.1682449362799041,
+      "positive_day_rate": 0.1747787610619469,
+      "sharpe": 2.5409270012940404,
+      "total_return": 2.029927938541342,
+      "trades": 159.0,
+      "turnover": 159.0,
+      "win_rate_in_market": 0.5984848484848485
+    }
+  },
+  "model_name": "logistic_regression",
+  "model_version": "v0.6.1",
+  "parameters": {
+    "entry_probability": 0.55,
+    "min_train_rows": 120,
+    "rebalance_rows": 20,
+    "slippage_bps": 2.0,
+    "transaction_cost_bps": 3.0
+  },
+  "source_run_id": 69,
+  "source_type": "backtest",
+  "started_at": "2026-10-28T02:15:59.244951+00:00",
+  "status": "success",
+  "strategy_name": "logistic_long_cash",
+  "strategy_version": "v0.6.2",
+  "target_symbol": "159558"
+}
