@@ -1,0 +1,48 @@
+{
+  "created_at": "2026-11-21T03:58:42.222232+00:00",
+  "data_version": "2026-11-20",
+  "experiment_id": "EXP-MODEL-000174",
+  "experiment_name": "calibrated_ensemble:v0.5.0",
+  "feature_version": "v0.2.0",
+  "finished_at": "2026-11-21T03:58:42.219729+00:00",
+  "git_commit": "b91f2bfda3eb345203785871da4b7984dbfbe7b1",
+  "label_version": "v0.3.0",
+  "metadata": {
+    "calibration_rows": 88,
+    "component_weights": {
+      "extra_trees": 0.3317384999009182,
+      "hist_gradient_boosting": 0.33518842932692483,
+      "logistic": 0.33307307077215687
+    },
+    "message": "temporal calibration and weighted ensemble complete",
+    "test_end": "2026-11-20",
+    "test_rows": 148,
+    "test_start": "2026-04-15",
+    "train_end": "2026-04-14",
+    "train_rows": 441,
+    "train_start": "2024-06-19"
+  },
+  "metrics": {
+    "holdout": {
+      "accuracy": 0.5202702702702703,
+      "active_rate": 0.22972972972972974,
+      "brier_score": 0.24856010464899586,
+      "log_loss": 0.6902639434522952,
+      "mean_agreement": 0.9733873161151058,
+      "mean_confidence": 0.027285876261308177,
+      "mean_position": 0.057432432432432436,
+      "positive_rate": 0.5067567567567568,
+      "roc_auc": 0.567123287671233
+    }
+  },
+  "model_name": "calibrated_ensemble",
+  "model_version": "v0.5.0",
+  "parameters": {},
+  "source_run_id": 174,
+  "source_type": "model",
+  "started_at": "2026-11-21T03:58:41.665159+00:00",
+  "status": "success",
+  "strategy_name": null,
+  "strategy_version": null,
+  "target_symbol": "159558"
+}
